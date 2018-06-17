@@ -31,8 +31,9 @@ class HrtfManager(val dir: File) {
                 list.add(v.toFloat())
             }
 
+            val src = FloatArray(list.size) + list
 
-            val irFFT = fft.transform(DoubleArray(list.size) + list.map { it.toDouble() }, TransformType.FORWARD)
+            val irFFT = fft.transform(src.map { it.toDouble() }.toDoubleArray(), TransformType.FORWARD)
 
             if (ch == "L")
                 L[deg] = irFFT
@@ -65,6 +66,6 @@ class HrtfManager(val dir: File) {
             //逆変換
             return fft.transform(fftR, TransformType.INVERSE)
         }
-        return Array<Complex>(0) { _-> Complex(0.0) }
+        return Array<Complex>(0) { _ -> Complex(0.0) }
     }
 }

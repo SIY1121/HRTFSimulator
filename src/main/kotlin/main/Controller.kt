@@ -44,7 +44,7 @@ class Controller : Initializable {
     fun play(actionEvent: ActionEvent) {
         srcGrabber = FFmpegFrameGrabber("D:\\OneDrive - 筑波大学\\Music\\塩谷哲 - ACCORDING TO LA METEO.mp3")
         srcGrabber.audioChannels = 1
-        srcGrabber.sampleRate = 44100
+        srcGrabber.sampleRate = 48000
         srcGrabber.sampleMode = FrameGrabber.SampleMode.FLOAT
         srcGrabber.start()
         Thread {
@@ -76,8 +76,8 @@ class Controller : Initializable {
                 }
 
                 //正規化
-                val max = dst.max() ?:1f
-                //println(max)
+                val max = 300f
+                println(max)
                 for (i in 0 until dst.size)
                     dst[i] /= max
 
