@@ -1,19 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.Group?>
+<?import javafx.scene.SubScene?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.layout.AnchorPane?>
-
-
-<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<AnchorPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.Controller">
-    <VBox>
-        <Button text="Button" onAction="#onImpulseSelect"/>
-        <Button text="play" onAction="#play"/>
-        <Slider layoutX="14.0" layoutY="14.0" max="355" min="0" fx:id="slider" AnchorPane.bottomAnchor="382.0" AnchorPane.leftAnchor="0.0"
-                AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
-    </VBox>
+
+<AnchorPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.Controller">
+    <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <center>
+            <StackPane fx:id="subSceneContainer">
+                <SubScene fx:id="subScene" depthBuffer="true" fill="gray" height="389.0" width="418.0">
+                    <root>
+                        <Group />
+                    </root>
+                </SubScene>
+            </StackPane>
+
+        </center>
+        <right>
+
+            <VBox minWidth="200.0" spacing="10.0" alignment="CENTER">
+                <Button onAction="#onImpulseSelect" text="HRTFデータベースを選択" />
+                <Button onAction="#onSrcSelect" text="音源選択" />
+                <Button onAction="#play" text="再生" />
+                <Slider fx:id="slider" max="355" min="0" />
+                <Slider fx:id="slider2" max="85" min="-50" />
+            </VBox>
+        </right>
+    </BorderPane>
 
 
 </AnchorPane>

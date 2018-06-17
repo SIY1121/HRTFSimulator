@@ -1,15 +1,20 @@
 package main
 
+import com.aquafx_project.AquaFx
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.fxml.FXMLLoader
 import javafx.scene.Scene
 import javafx.scene.layout.AnchorPane
 import javafx.stage.Stage
+import java.io.File
 
 class Main : Application() {
     override fun start(primaryStage: Stage) {
-        primaryStage.scene = Scene(FXMLLoader.load<AnchorPane>(ClassLoader.getSystemResource("main.fxml")))
+        AquaFx.style()
+        val loader = FXMLLoader(ClassLoader.getSystemResource("main.fxml"))
+        primaryStage.scene = Scene(loader.load<AnchorPane>())
+        loader.getController<Controller>().stage = primaryStage
         primaryStage.setOnCloseRequest {
             Platform.exit()
         }

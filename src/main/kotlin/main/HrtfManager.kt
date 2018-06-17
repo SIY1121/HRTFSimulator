@@ -10,46 +10,51 @@ import java.io.FileReader
 
 class HrtfManager(val dir: File) {
 
-    val L = HashMap<Int, Array<Complex>>()
-    val R = HashMap<Int, Array<Complex>>()
+    val L = HashMap<String, Array<Complex>>()
+    val R = HashMap<String, Array<Complex>>()
     val fft = FastFourierTransformer(DftNormalization.STANDARD)
 
     val size: Int
-        get() = L[0]?.size ?: 0
+        get() = L["0_0"]?.size ?: throw Exception("サイズを返せません")
 
     init {
-        val regex = Regex("(L|R)(.*?)e(.*?)a\\.dat")
+        val regex = Regex("(L|R)(.*?)d(.*?)e(.*?)a\\.dat")
         dir.listFiles().forEach {
-            val res = regex.find(it.name) ?: throw Exception("ファイル名を解析できません")
-            val ch = res.groupValues[1]
-            val deg = res.groupValues[3].toInt()
+            if (it.isDirectory)
+                it.listFiles().forEach {
+                    val res = regex.find(it.name) ?: throw Exception("ファイル名を解析できません")
+                    val ch = res.groupValues[1]
+                    val deg = res.groupValues[4].toInt()
+                    val elev = res.groupValues[3].toInt()
 
-            val reader = BufferedReader(FileReader(it))
-            val list = ArrayList<Float>()
-            while (true) {
-                val v = reader.readLine() ?: break
-                list.add(v.toFloat())
-            }
+                    val reader = BufferedReader(FileReader(it))
+                    val list = ArrayList<Float>()
+                    while (true) {
+                        val v = reader.readLine() ?: break
+                        list.add(v.toFloat())
+                    }
 
-            val src = FloatArray(list.size) + list
+                    val src = FloatArray(list.size) + list
 
-            val irFFT = fft.transform(src.map { it.toDouble() }.toDoubleArray(), TransformType.FORWARD)
+                    val irFFT = fft.transform(src.map { it.toDouble() }.toDoubleArray(), TransformType.FORWARD)
 
-            if (ch == "L")
-                L[deg] = irFFT
-            else if (ch == "R")
-                R[deg] = irFFT
+                    if (ch == "L")
+                        L["${elev}_$deg"] = irFFT
+                    else if (ch == "R")
+                        R["${elev}_$deg"] = irFFT
+                }
+
         }
     }
 
-    fun applyHRTF(src: FloatArray, ch: String, deg: Int): Array<Complex> {
+    fun applyHRTF(src: FloatArray, ch: String, deg: Int, elev: Int): Array<Complex> {
         if (ch == "L") {
             //FFT変換
             var fftL = fft.transform(src.map { it.toDouble() }.toDoubleArray(), TransformType.FORWARD)
 
             //周波数領域で畳み込む
             fftL = fftL.mapIndexed { index, complex ->
-                complex.multiply(L[deg]?.get(index)) ?: Complex(0.0)
+                complex.multiply(L["${elev}_$deg"]?.get(index)) ?: Complex(0.0)
             }.toTypedArray()
 
             //逆変換
@@ -60,7 +65,7 @@ class HrtfManager(val dir: File) {
 
             //周波数領域で畳み込む
             fftR = fftR.mapIndexed { index, complex ->
-                complex.multiply(L[deg]?.get(index)) ?: Complex(0.0)
+                complex.multiply(R["${elev}_$deg"]?.get(index)) ?: Complex(0.0)
             }.toTypedArray()
 
             //逆変換
