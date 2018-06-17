@@ -49,7 +49,7 @@ class HrtfManager(val dir: File) {
 
             //周波数領域で畳み込む
             fftL = fftL.mapIndexed { index, complex ->
-                L[deg]?.get(index)?.multiply(complex) ?: Complex(0.0)
+                complex.multiply(L[deg]?.get(index)) ?: Complex(0.0)
             }.toTypedArray()
 
             //逆変換
@@ -60,7 +60,7 @@ class HrtfManager(val dir: File) {
 
             //周波数領域で畳み込む
             fftR = fftR.mapIndexed { index, complex ->
-                R[deg]?.get(index)?.multiply(complex) ?: Complex(0.0)
+                complex.multiply(L[deg]?.get(index)) ?: Complex(0.0)
             }.toTypedArray()
 
             //逆変換

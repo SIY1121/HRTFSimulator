@@ -85,7 +85,7 @@ class Controller : Initializable {
                 //円状畳み込み結果である前半は切り捨て
                 val buf = ByteBuffer.allocate(dst.size).order(ByteOrder.LITTLE_ENDIAN)
                 for (i in 0 until dst.size / 2) {
-                    buf.putShort((dst[i + dst.size / 2] * Short.MAX_VALUE).toShort())
+                    buf.putShort((dst[i] * Short.MAX_VALUE).toShort())
                 }
                 buf.position(0)
 
