@@ -54,11 +54,19 @@ class Controller : Initializable {
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         subScene.camera = PerspectiveCamera(true)
-        subScene.camera.translateZ = -400.0 * 45.0 / 360.0 * (Math.PI * 2)
-        subScene.camera.translateY = -400.0 * 45.0 / 360.0 * (Math.PI * 2)
+        subScene.camera.translateZ = -400.0 * 30.0 / 360.0 * (Math.PI * 2) - 150
+        subScene.camera.translateY = -400.0 * 30.0 / 360.0 * (Math.PI * 2)
         subScene.camera.rotationAxis = Rotate.X_AXIS
-        subScene.camera.rotate = -45.0
+        subScene.camera.rotate = -30.0
         subScene.camera.farClip = 1000.0
+
+        val helper = Circle(100.0).apply {
+            fill = Color.TRANSPARENT
+            stroke = Color.RED
+            rotationAxis = Rotate.X_AXIS
+            rotate = 180.0
+        }
+        (subScene.root as Group).children.add(helper)
 
         val sphere = Sphere(10.0).apply {
 
@@ -86,11 +94,11 @@ class Controller : Initializable {
                 specularColor = Color.YELLOWGREEN
             }
         }
-
         (subScene.root as Group).children.add(box)
+
         (subScene.root as Group).children.add(PointLight().apply {
-            translateX = 50.0
-            translateY = -40.0
+            translateX = 100.0
+            translateY = -200.0
         })
 
         (subScene.root as Group).children.add(AmbientLight(Color.rgb(80, 80, 80, 0.5)))
@@ -103,6 +111,9 @@ class Controller : Initializable {
             box.translateX = Math.cos((n.toDouble() + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(slider2.value / 360.0 * Math.PI * 2)
             box.translateZ = Math.sin((n.toDouble() + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(slider2.value / 360.0 * Math.PI * 2)
             box.translateY = Math.sin(slider2.value / 360.0 * Math.PI * 2) * -100
+
+            helper.rotationAxis = Rotate.Y_AXIS
+            helper.rotate = -n.toDouble() +90.0
         }
 
         slider2.valueProperty().addListener { _, _, n ->

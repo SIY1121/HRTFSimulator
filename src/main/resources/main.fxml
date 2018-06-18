@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.Group?>
 <?import javafx.scene.SubScene?>
 <?import javafx.scene.control.Button?>
@@ -23,12 +24,15 @@
         </center>
         <right>
 
-            <VBox minWidth="300.0" spacing="10.0" alignment="CENTER">
-                <Button onAction="#onImpulseSelect" text="HRTFデータベースを選択" />
-                <Button onAction="#onSrcSelect" text="音源選択" />
-                <Button onAction="#play" text="再生" />
+            <VBox alignment="CENTER" minWidth="300.0" spacing="10.0">
+                <Button onAction="#onImpulseSelect" prefHeight="25.0" prefWidth="160.0" text="HRTFデータベースを選択" />
+                <Button onAction="#onSrcSelect" prefHeight="25.0" prefWidth="160.0" text="音源選択" />
+                <Button onAction="#play" prefHeight="25.0" prefWidth="160.0" text="再生" />
                 <Slider fx:id="slider" max="355" min="0" />
                 <Slider fx:id="slider2" max="85" min="-50" />
+            <padding>
+               <Insets left="5.0" right="5.0" />
+            </padding>
             </VBox>
         </right>
     </BorderPane>
