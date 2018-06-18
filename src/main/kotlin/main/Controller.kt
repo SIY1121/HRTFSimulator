@@ -70,7 +70,7 @@ class Controller : Initializable {
         (subScene.root as Group).children.add(sphere)
 
 
-        val circle = Circle(100.0).apply{
+        val circle = Circle(100.0).apply {
             fill = Color.TRANSPARENT
             stroke = Color.YELLOW
             rotationAxis = Rotate.X_AXIS
@@ -92,6 +92,7 @@ class Controller : Initializable {
             translateX = 50.0
             translateY = -40.0
         })
+
         (subScene.root as Group).children.add(AmbientLight(Color.rgb(80, 80, 80, 0.5)))
         subScene.isManaged = false
 
@@ -99,9 +100,15 @@ class Controller : Initializable {
         subScene.heightProperty().bind(subSceneContainer.heightProperty())
 
         slider.valueProperty().addListener { _, _, n ->
-            box.translateX = Math.cos((n.toDouble() + 90.0) / 360.0 * Math.PI * 2) * 100
-            box.translateZ = Math.sin((n.toDouble() + 90.0) / 360.0 * Math.PI * 2) * 100
+            box.translateX = Math.cos((n.toDouble() + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(slider2.value / 360.0 * Math.PI * 2)
+            box.translateZ = Math.sin((n.toDouble() + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(slider2.value / 360.0 * Math.PI * 2)
+            box.translateY = Math.sin(slider2.value / 360.0 * Math.PI * 2) * -100
+        }
 
+        slider2.valueProperty().addListener { _, _, n ->
+            box.translateX = Math.cos((slider.value + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(n.toDouble() / 360.0 * Math.PI * 2)
+            box.translateZ = Math.sin((slider.value + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(n.toDouble() / 360.0 * Math.PI * 2)
+            box.translateY = Math.sin(n.toDouble() / 360.0 * Math.PI * 2) * -100
         }
     }
 

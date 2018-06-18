@@ -23,7 +23,7 @@
         </center>
         <right>
 
-            <VBox minWidth="200.0" spacing="10.0" alignment="CENTER">
+            <VBox minWidth="300.0" spacing="10.0" alignment="CENTER">
                 <Button onAction="#onImpulseSelect" text="HRTFデータベースを選択" />
                 <Button onAction="#onSrcSelect" text="音源選択" />
                 <Button onAction="#play" text="再生" />
