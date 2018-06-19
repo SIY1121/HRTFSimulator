@@ -1,11 +1,15 @@
 package main
 
+import javafx.application.Platform
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.*
 import javafx.scene.control.Button
+import javafx.scene.control.Label
 import javafx.scene.control.Slider
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
@@ -17,6 +21,7 @@ import javafx.scene.transform.Rotate
 import javafx.stage.DirectoryChooser
 import javafx.stage.FileChooser
 import javafx.stage.Stage
+import org.bytedeco.javacv.CanvasFrame
 import org.bytedeco.javacv.FFmpegFrameGrabber
 import org.bytedeco.javacv.FrameGrabber
 import java.net.URL
@@ -28,6 +33,7 @@ import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.SourceDataLine
+import kotlin.collections.ArrayList
 
 class Controller : Initializable {
 
@@ -47,10 +53,27 @@ class Controller : Initializable {
     lateinit var subScene: SubScene
     @FXML
     lateinit var subSceneContainer: StackPane
+    @FXML
+    lateinit var buttonImage: ImageView
+    @FXML
+    lateinit var irSampleCanvasL: SimpleGraph
+    @FXML
+    lateinit var irSampleCanvasR: SimpleGraph
+    @FXML
+    lateinit var dstSampleCanvasL: SimpleGraph
+    @FXML
+    lateinit var dstSampleCanvasR: SimpleGraph
+
+    @FXML
+    lateinit var currentPositionLabel: Label
+    @FXML
+    lateinit var seekBar: Slider
 
     lateinit var manager: HrtfManager
 
     lateinit var srcGrabber: FFmpegFrameGrabber
+
+    var playing = false
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         subScene.camera = PerspectiveCamera(true)
@@ -113,14 +136,25 @@ class Controller : Initializable {
             box.translateY = Math.sin(slider2.value / 360.0 * Math.PI * 2) * -100
 
             helper.rotationAxis = Rotate.Y_AXIS
-            helper.rotate = -n.toDouble() +90.0
+            helper.rotate = -n.toDouble() + 90.0
+
+            irSampleCanvasL.data = manager.LRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
+            irSampleCanvasR.data = manager.RRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
+
         }
 
         slider2.valueProperty().addListener { _, _, n ->
             box.translateX = Math.cos((slider.value + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(n.toDouble() / 360.0 * Math.PI * 2)
             box.translateZ = Math.sin((slider.value + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(n.toDouble() / 360.0 * Math.PI * 2)
             box.translateY = Math.sin(n.toDouble() / 360.0 * Math.PI * 2) * -100
+
+            irSampleCanvasL.data = manager.LRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
+            irSampleCanvasR.data = manager.RRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
+
         }
+//        seekBar.valueProperty().addListener { _, _, n ->
+//            srcGrabber.timestamp = n.toLong()
+//        }
     }
 
     fun onImpulseSelect() {
@@ -131,6 +165,17 @@ class Controller : Initializable {
 
     fun play(actionEvent: ActionEvent) {
 
+        root.scene.window.setOnCloseRequest {
+            playing = false
+        }
+
+        if (playing) {
+            playing = false
+            buttonImage.image = Image(ClassLoader.getSystemResource("baseline_play_arrow_black_48dp.png").toString())
+            return
+        }
+        playing = true
+        buttonImage.image = Image(ClassLoader.getSystemResource("baseline_pause_black_48dp.png").toString())
         Thread {
             val audioFormat = AudioFormat((srcGrabber.sampleRate.toFloat() ?: 0f), 16, 2, true, false)
 
@@ -146,12 +191,22 @@ class Controller : Initializable {
             //rec.start()
             var max = 1f
             var prevSample = FloatArray(manager.size / 2)
-            while (true) {
+            while (playing) {
                 val sample = readSamples(manager.size / 2) ?: break
 
                 val src = prevSample + sample
                 val dstL = manager.applyHRTF(src, "L", slider.value.toInt() / 5 * 5, slider2.value.toInt() / 5 * 5)
                 val dstR = manager.applyHRTF(src, "R", slider.value.toInt() / 5 * 5, slider2.value.toInt() / 5 * 5)
+
+                Platform.runLater {
+                    //グラフ描画
+                    dstSampleCanvasL.data = dstL.slice(0 until dstL.size / 2).mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.real) }
+                    dstSampleCanvasR.data = dstR.slice(0 until dstL.size / 2).mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.real) }
+                    seekBar.max = srcGrabber.lengthInTime.toDouble()
+                    seekBar.value = srcGrabber.timestamp.toDouble()
+                    currentPositionLabel.text = srcGrabber.timestamp.long2TimeText()
+                }
+
 
                 val dst = FloatArray(dstL.size + dstR.size)
                 for (i in 0 until dstL.size) {
@@ -229,5 +284,14 @@ class Controller : Initializable {
         srcGrabber.sampleRate = 48000
         srcGrabber.sampleMode = FrameGrabber.SampleMode.FLOAT
         srcGrabber.start()
+    }
+
+    fun prev(actionEvent: ActionEvent) {
+        srcGrabber.timestamp = 0
+    }
+
+    fun Long.long2TimeText(): String {
+        val a = this / 1000_000
+        return "${a / 60}:${String.format("%02d", a % 60)}"
     }
 }

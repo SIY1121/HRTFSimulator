@@ -4,13 +4,18 @@
 <?import javafx.scene.Group?>
 <?import javafx.scene.SubScene?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Slider?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import main.SimpleGraph?>
 
-<AnchorPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.Controller">
+<AnchorPane fx:id="root" prefHeight="800.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.Controller">
     <BorderPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <center>
             <StackPane fx:id="subSceneContainer">
@@ -24,15 +29,53 @@
         </center>
         <right>
 
-            <VBox alignment="CENTER" minWidth="300.0" spacing="10.0">
-                <Button onAction="#onImpulseSelect" prefHeight="25.0" prefWidth="160.0" text="HRTFデータベースを選択" />
-                <Button onAction="#onSrcSelect" prefHeight="25.0" prefWidth="160.0" text="音源選択" />
-                <Button onAction="#play" prefHeight="25.0" prefWidth="160.0" text="再生" />
-                <Slider fx:id="slider" max="355" min="0" />
-                <Slider fx:id="slider2" max="85" min="-50" />
-            <padding>
-               <Insets left="5.0" right="5.0" />
-            </padding>
+            <VBox alignment="CENTER" minWidth="300.0" spacing="5.0">
+                <VBox alignment="CENTER" spacing="5.0" style="-fx-background-color: lightGray">
+                    <Button onAction="#onImpulseSelect" prefHeight="25.0" prefWidth="160.0" text="Select HRTF Database" />
+                    <Button onAction="#onSrcSelect" prefHeight="25.0" prefWidth="160.0" text="Select Source" />
+                    <HBox spacing="10">
+                        <Label fx:id="currentPositionLabel" text="0:00" />
+                        <Slider fx:id="seekBar" HBox.hgrow="ALWAYS" />
+                    </HBox>
+                    <HBox alignment="CENTER" prefHeight="47.0" prefWidth="290.0" spacing="10.0">
+                        <children>
+                            <Button mnemonicParsing="false" onAction="#prev">
+                                <graphic>
+                                    <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                            <Image url="@baseline_skip_previous_black_48dp.png" />
+                                        </image>
+                                    </ImageView>
+                                </graphic>
+                            </Button>
+                            <Button onAction="#play" prefHeight="33.0" prefWidth="45.0">
+                                <graphic>
+                                    <ImageView fx:id="buttonImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                            <Image url="@baseline_play_arrow_black_48dp.png" />
+                                        </image>
+                                    </ImageView>
+                                </graphic>
+                            </Button>
+                        </children>
+                    </HBox>
+                </VBox>
+                <HBox spacing="10">
+                    <Label text="deg" />
+                    <Slider fx:id="slider" max="355" min="0" HBox.hgrow="ALWAYS" />
+                </HBox>
+                <HBox spacing="10">
+                    <Label text="elev" />
+                    <Slider fx:id="slider2" max="85" min="-50" HBox.hgrow="ALWAYS" />
+                </HBox>
+                <SimpleGraph fx:id="irSampleCanvasL" background="#EEEEEE" prefHeight="200.0" prefWidth="400.0" title="Impulse response L" xAxisName="t[s]" yNegative="true" />
+                <SimpleGraph fx:id="irSampleCanvasR" background="#EEEEEE" prefHeight="200.0" prefWidth="400.0" title="Impulse response  R" xAxisName="t[s]" yNegative="true" />
+                <SimpleGraph fx:id="dstSampleCanvasL" background="#EEEEEE" prefHeight="200.0" prefWidth="400.0" title="Result L" xAxisName="t[s]" yNegative="true" />
+                <SimpleGraph fx:id="dstSampleCanvasR" background="#EEEEEE" prefHeight="200.0" prefWidth="400.0" title="Result R" xAxisName="t[s]" yNegative="true" />
+
+                <padding>
+                    <Insets left="5.0" right="5.0" />
+                </padding>
             </VBox>
         </right>
     </BorderPane>
