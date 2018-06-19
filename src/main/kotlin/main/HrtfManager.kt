@@ -12,6 +12,9 @@ class HrtfManager(val dir: File) {
 
     val L = HashMap<String, Array<Complex>>()
     val R = HashMap<String, Array<Complex>>()
+    val LRaw = HashMap<String,FloatArray>()
+    val RRaw = HashMap<String,FloatArray>()
+
     val fft = FastFourierTransformer(DftNormalization.STANDARD)
 
     val size: Int
@@ -38,15 +41,22 @@ class HrtfManager(val dir: File) {
 
                     val irFFT = fft.transform(src.map { it.toDouble() }.toDoubleArray(), TransformType.FORWARD)
 
-                    if (ch == "L")
+                    if (ch == "L"){
                         L["${elev}_$deg"] = irFFT
-                    else if (ch == "R")
+                        LRaw["${elev}_$deg"] = list.toFloatArray()
+                    }
+                    else if (ch == "R"){
                         R["${elev}_$deg"] = irFFT
+                        RRaw["${elev}_$deg"] = list.toFloatArray()
+                    }
                 }
 
         }
     }
 
+    /**
+     * HRTFを適用する
+     */
     fun applyHRTF(src: FloatArray, ch: String, deg: Int, elev: Int): Array<Complex> {
         if (ch == "L") {
             //FFT変換

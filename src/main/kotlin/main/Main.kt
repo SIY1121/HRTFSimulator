@@ -14,6 +14,7 @@ class Main : Application() {
         AquaFx.style()
         val loader = FXMLLoader(ClassLoader.getSystemResource("main.fxml"))
         primaryStage.scene = Scene(loader.load<AnchorPane>())
+        primaryStage.title = "HRTF Simulator"
         loader.getController<Controller>().stage = primaryStage
         primaryStage.setOnCloseRequest {
             Platform.exit()

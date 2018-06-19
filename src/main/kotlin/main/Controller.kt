@@ -1,24 +1,23 @@
 package main
 
+import javafx.application.Platform
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
-import javafx.scene.*
-import javafx.scene.control.Button
+import javafx.scene.SubScene
+import javafx.scene.control.Label
+import javafx.scene.control.ProgressBar
 import javafx.scene.control.Slider
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
-import javafx.scene.paint.Color
-import javafx.scene.paint.PhongMaterial
-import javafx.scene.shape.Box
-import javafx.scene.shape.Circle
-import javafx.scene.shape.Sphere
-import javafx.scene.transform.Rotate
 import javafx.stage.DirectoryChooser
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import org.bytedeco.javacv.FFmpegFrameGrabber
 import org.bytedeco.javacv.FrameGrabber
+import ui.WindowFactory
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -28,14 +27,11 @@ import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.SourceDataLine
+import kotlin.collections.ArrayList
 
 class Controller : Initializable {
 
     var stage: Stage? = null
-        set(value) {
-            field = value
-            //stage?.scene?.camera = PerspectiveCamera(true)
-        }
 
     @FXML
     lateinit var root: Pane
@@ -47,89 +43,104 @@ class Controller : Initializable {
     lateinit var subScene: SubScene
     @FXML
     lateinit var subSceneContainer: StackPane
+    @FXML
+    lateinit var buttonImage: ImageView
+    @FXML
+    lateinit var irSampleCanvasL: SimpleGraph
+    @FXML
+    lateinit var irSampleCanvasR: SimpleGraph
+    @FXML
+    lateinit var dstSampleCanvasL: SimpleGraph
+    @FXML
+    lateinit var dstSampleCanvasR: SimpleGraph
+
+    @FXML
+    lateinit var currentPositionLabel: Label
+    @FXML
+    lateinit var seekBar: ProgressBar
+    @FXML
+    lateinit var subSceneManager: SubSceneManager
 
     lateinit var manager: HrtfManager
 
     lateinit var srcGrabber: FFmpegFrameGrabber
 
+    var playing = false
+
     override fun initialize(location: URL?, resources: ResourceBundle?) {
-        subScene.camera = PerspectiveCamera(true)
-        subScene.camera.translateZ = -400.0 * 30.0 / 360.0 * (Math.PI * 2) - 150
-        subScene.camera.translateY = -400.0 * 30.0 / 360.0 * (Math.PI * 2)
-        subScene.camera.rotationAxis = Rotate.X_AXIS
-        subScene.camera.rotate = -30.0
-        subScene.camera.farClip = 1000.0
 
-        val helper = Circle(100.0).apply {
-            fill = Color.TRANSPARENT
-            stroke = Color.RED
-            rotationAxis = Rotate.X_AXIS
-            rotate = 180.0
-        }
-        (subScene.root as Group).children.add(helper)
-
-        val sphere = Sphere(10.0).apply {
-
-            material = PhongMaterial().apply {
-                diffuseColor = Color.BLUE
-                specularColor = Color.SKYBLUE
-            }
-        }
-        (subScene.root as Group).children.add(sphere)
-
-
-        val circle = Circle(100.0).apply {
-            fill = Color.TRANSPARENT
-            stroke = Color.YELLOW
-            rotationAxis = Rotate.X_AXIS
-            rotate = 90.0
-        }
-        (subScene.root as Group).children.add(circle)
-
-
-        val box = Box(10.0, 10.0, 10.0).apply {
-
-            material = PhongMaterial().apply {
-                diffuseColor = Color.GREEN
-                specularColor = Color.YELLOWGREEN
-            }
-        }
-        (subScene.root as Group).children.add(box)
-
-        (subScene.root as Group).children.add(PointLight().apply {
-            translateX = 100.0
-            translateY = -200.0
-        })
-
-        (subScene.root as Group).children.add(AmbientLight(Color.rgb(80, 80, 80, 0.5)))
-        subScene.isManaged = false
-
+        //シーンマネージャを初期化
+        subSceneManager = SubSceneManager(subScene)
+        //シーンのサイズを外枠に合わせる
         subScene.widthProperty().bind(subSceneContainer.widthProperty())
         subScene.heightProperty().bind(subSceneContainer.heightProperty())
 
+        //角度スライダー
         slider.valueProperty().addListener { _, _, n ->
-            box.translateX = Math.cos((n.toDouble() + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(slider2.value / 360.0 * Math.PI * 2)
-            box.translateZ = Math.sin((n.toDouble() + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(slider2.value / 360.0 * Math.PI * 2)
-            box.translateY = Math.sin(slider2.value / 360.0 * Math.PI * 2) * -100
+            subSceneManager.setStatus(slider2.value.toInt(), slider.value.toInt())
+            irSampleCanvasL.data = manager.LRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
+            irSampleCanvasR.data = manager.RRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
 
-            helper.rotationAxis = Rotate.Y_AXIS
-            helper.rotate = -n.toDouble() +90.0
         }
-
+        //高度スライダー
         slider2.valueProperty().addListener { _, _, n ->
-            box.translateX = Math.cos((slider.value + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(n.toDouble() / 360.0 * Math.PI * 2)
-            box.translateZ = Math.sin((slider.value + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(n.toDouble() / 360.0 * Math.PI * 2)
-            box.translateY = Math.sin(n.toDouble() / 360.0 * Math.PI * 2) * -100
+            subSceneManager.setStatus(slider2.value.toInt(), slider.value.toInt())
+            irSampleCanvasL.data = manager.LRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
+            irSampleCanvasR.data = manager.RRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
+
         }
+
     }
 
+    /**
+     * インパルス応答のデータベースが選択されたときに呼び出される
+     */
     fun onImpulseSelect() {
         val dir = DirectoryChooser().showDialog(root.scene.window) ?: return
-        manager = HrtfManager(dir)
-        println(manager.L)
+        val dialog = WindowFactory.buildOnProgressDialog("Processing", "Loading Database...")
+        dialog.show()
+        Thread {
+            manager = HrtfManager(dir)
+            println(manager.L)
+            Platform.runLater { dialog.close() }
+        }.start()
     }
 
+    /**
+     * 畳み込み先ファイルが選択されたときに呼び出される
+     */
+    fun onSrcSelect(actionEvent: ActionEvent) {
+        val file = FileChooser().showOpenDialog(root.scene.window) ?: return
+        val dialog = WindowFactory.buildOnProgressDialog("Processing", "Loading Music...")
+        dialog.show()
+        Thread{
+            srcGrabber = FFmpegFrameGrabber(file)
+            srcGrabber.audioChannels = 1
+            srcGrabber.sampleRate = 48000
+            srcGrabber.sampleMode = FrameGrabber.SampleMode.FLOAT
+            srcGrabber.start()
+            Platform.runLater { dialog.close() }
+        }.start()
+
+    }
+
+    /**
+     * 再生
+     */
     fun play(actionEvent: ActionEvent) {
+
+        //ウィンドウを閉じる際に再生を停止
+        root.scene.window.setOnCloseRequest {
+            playing = false
+        }
+
+        if (playing) {
+            playing = false
+            buttonImage.image = Image(ClassLoader.getSystemResource("baseline_play_arrow_black_48dp.png").toString())
+            return
+        }
+        playing = true
+        buttonImage.image = Image(ClassLoader.getSystemResource("baseline_pause_black_48dp.png").toString())
 
         Thread {
             val audioFormat = AudioFormat((srcGrabber.sampleRate.toFloat() ?: 0f), 16, 2, true, false)
@@ -146,12 +157,21 @@ class Controller : Initializable {
             //rec.start()
             var max = 1f
             var prevSample = FloatArray(manager.size / 2)
-            while (true) {
+            while (playing) {
                 val sample = readSamples(manager.size / 2) ?: break
 
                 val src = prevSample + sample
                 val dstL = manager.applyHRTF(src, "L", slider.value.toInt() / 5 * 5, slider2.value.toInt() / 5 * 5)
                 val dstR = manager.applyHRTF(src, "R", slider.value.toInt() / 5 * 5, slider2.value.toInt() / 5 * 5)
+
+                Platform.runLater {
+                    //グラフ描画
+                    dstSampleCanvasL.data = dstL.slice(0 until dstL.size / 2).mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.real) }
+                    dstSampleCanvasR.data = dstR.slice(0 until dstL.size / 2).mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.real) }
+                    seekBar.progress = srcGrabber.timestamp / srcGrabber.lengthInTime.toDouble()
+                    currentPositionLabel.text = srcGrabber.timestamp.long2TimeText()
+                }
+
 
                 val dst = FloatArray(dstL.size + dstR.size)
                 for (i in 0 until dstL.size) {
@@ -180,6 +200,7 @@ class Controller : Initializable {
                 prevSample = sample
             }
             //rec.stop()
+            audioLine.stop()
         }.start()
     }
 
@@ -222,12 +243,17 @@ class Controller : Initializable {
         return this + FloatArray(Math.pow(2.0, i).toInt() - this.size)
     }
 
-    fun onSrcSelect(actionEvent: ActionEvent) {
-        val file = FileChooser().showOpenDialog(root.scene.window) ?: return
-        srcGrabber = FFmpegFrameGrabber(file)
-        srcGrabber.audioChannels = 1
-        srcGrabber.sampleRate = 48000
-        srcGrabber.sampleMode = FrameGrabber.SampleMode.FLOAT
-        srcGrabber.start()
+
+    fun prev(actionEvent: ActionEvent) {
+        srcGrabber.timestamp = 0
+    }
+
+    fun Long.long2TimeText(): String {
+        val a = this / 1000_000
+        return "${a / 60}:${String.format("%02d", a % 60)}"
+    }
+
+    fun showProgressDialog() {
+        val stage = Stage()
     }
 }
