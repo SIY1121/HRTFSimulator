@@ -62,6 +62,9 @@ class SubSceneManager(subScene : SubScene) {
         subScene.isManaged = false
     }
 
+    /**
+     * 3Dビューを更新
+     */
     fun setStatus(elev : Int , deg : Int){
         box.translateX = Math.cos((deg + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(elev / 360.0 * Math.PI * 2)
         box.translateZ = Math.sin((deg + 90.0) / 360.0 * Math.PI * 2) * 100 * Math.cos(elev / 360.0 * Math.PI * 2)

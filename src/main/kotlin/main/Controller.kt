@@ -69,27 +69,27 @@ class Controller : Initializable {
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
+        //シーンマネージャを初期化
         subSceneManager = SubSceneManager(subScene)
-
+        //シーンのサイズを外枠に合わせる
         subScene.widthProperty().bind(subSceneContainer.widthProperty())
         subScene.heightProperty().bind(subSceneContainer.heightProperty())
 
+        //角度スライダー
         slider.valueProperty().addListener { _, _, n ->
             subSceneManager.setStatus(slider2.value.toInt(), slider.value.toInt())
             irSampleCanvasL.data = manager.LRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
             irSampleCanvasR.data = manager.RRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
 
         }
-
+        //高度スライダー
         slider2.valueProperty().addListener { _, _, n ->
             subSceneManager.setStatus(slider2.value.toInt(), slider.value.toInt())
             irSampleCanvasL.data = manager.LRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
             irSampleCanvasR.data = manager.RRaw["${slider2.value.toInt() / 5 * 5}_${slider.value.toInt() / 5 * 5}"]?.mapIndexed { index, value -> SimpleGraph.DataPoint(index.toDouble(), value.toDouble()) } ?: ArrayList<SimpleGraph.DataPoint>()
 
         }
-//        seekBar.valueProperty().addListener { _, _, n ->
-//            srcGrabber.timestamp = n.toLong()
-//        }
+
     }
 
     /**
@@ -124,8 +124,12 @@ class Controller : Initializable {
 
     }
 
+    /**
+     * 再生
+     */
     fun play(actionEvent: ActionEvent) {
 
+        //ウィンドウを閉じる際に再生を停止
         root.scene.window.setOnCloseRequest {
             playing = false
         }
@@ -137,6 +141,7 @@ class Controller : Initializable {
         }
         playing = true
         buttonImage.image = Image(ClassLoader.getSystemResource("baseline_pause_black_48dp.png").toString())
+
         Thread {
             val audioFormat = AudioFormat((srcGrabber.sampleRate.toFloat() ?: 0f), 16, 2, true, false)
 
@@ -195,6 +200,7 @@ class Controller : Initializable {
                 prevSample = sample
             }
             //rec.stop()
+            audioLine.stop()
         }.start()
     }
 

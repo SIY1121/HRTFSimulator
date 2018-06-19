@@ -54,6 +54,9 @@ class HrtfManager(val dir: File) {
         }
     }
 
+    /**
+     * HRTFを適用する
+     */
     fun applyHRTF(src: FloatArray, ch: String, deg: Int, elev: Int): Array<Complex> {
         if (ch == "L") {
             //FFT変換
